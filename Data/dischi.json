@@ -1,0 +1,5 @@
+{
+  "dischi": [{"Artista": "John Bon Jovi", "Generi": ["Rock","Pop"], "Quantità": 34},
+             {"Artista": "Elton John", "Generi": ["Pop", "Funky"], "Quantità": 12},
+             {"Artista": "George Benson", "Generi": ["Blues","Jazz", "Pop"], "Quantità": 22}]
+}
