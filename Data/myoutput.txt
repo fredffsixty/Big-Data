@@ -1,0 +1,18 @@
+total 392
+drwxr-xr-x  17 pirrone  staff   544B  3 Ott 17:06 .
+drwxr-xr-x   5 pirrone  staff   160B 21 Set 11:27 ..
+-rw-r--r--@  1 pirrone  staff    12K  2 Ott 20:09 .DS_Store
+drwxr-xr-x  15 pirrone  staff   480B  3 Ott 15:00 .git
+drwxr-xr-x  10 pirrone  staff   320B  3 Ott 13:37 .idea
+drwxr-xr-x   9 pirrone  staff   288B  3 Ott 10:39 .ipynb_checkpoints
+-rw-r--r--   1 pirrone  staff    14K 26 Set 15:19 Configurazione dell'ambiente Python.ipynb
+drwxr-xr-x  10 pirrone  staff   320B  3 Ott 17:20 Data
+-rw-r--r--   1 pirrone  staff   1,0K 17 Ago 13:33 LICENSE
+drwxr-xr-x   5 pirrone  staff   160B 21 Set 11:58 Libri di testo
+-rw-r--r--   1 pirrone  staff    27K 23 Set 13:46 Plot example.ipynb
+drwxr-xr-x   6 pirrone  staff   192B  3 Ott 10:30 Python programming
+-rw-r--r--   1 pirrone  staff    35K 26 Set 17:02 Python programming 1.ipynb
+-rw-r--r--   1 pirrone  staff    20K  2 Ott 17:56 Python programming 2.ipynb
+-rw-r--r--   1 pirrone  staff    46K  3 Ott 17:06 Python programming 3.ipynb
+-rw-r--r--   1 pirrone  staff   290B  3 Set 14:15 README.md
+-rw-r--r--   1 pirrone  staff    22K 23 Set 13:47 Widget example.ipynb
