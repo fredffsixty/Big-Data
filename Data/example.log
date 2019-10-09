@@ -1,0 +1,5 @@
+INFO:root:Run #1: "add" is called with arguments (3, 3)
+INFO:root:Run #2: "add" is called with arguments (4, 5)
+INFO:root:Run #1: "sub" is called with arguments (10, 5)
+INFO:root:Run #2: "sub" is called with arguments (20, 10)
+INFO:root:Run #1: "cos" is called with arguments (3.141592653589793,)
