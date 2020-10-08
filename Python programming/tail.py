@@ -7,7 +7,13 @@ import sys
 # e poi sottrae questa posizione dalla lunghezza totale della stringa
 #
 def lastIndexOf(s,c):
-    return len(s) - 1 - s[::-1].index(c)
+    try:
+      idx = len(s) - 1 - s[::-1].index(c)
+    except ValueError:
+      idx = len(s)
+    
+    return idx
+    
 
 def main():
 
@@ -15,8 +21,9 @@ def main():
   if len(sys.argv) != 3:
     print('Errore negli argomenti!!\n\nUso: tail.py <stringa> <carattere>|<indice>')
 
-  elif not sys.argv[2].isdigit():       # verifica che il secondo argomento non sia una stringa tutta numerica
-                                        # e quindi cerca la sua ultima occorrenza nella string aprimo argomento
+  elif not (sys.argv[2].isdigit() or (sys.argv[2][0]=='-' and sys.argv[2][1::].isdigit())):
+                              # verifica che il secondo argomento non sia una stringa tutta numerica
+                              # e quindi cerca la sua ultima occorrenza nella stringa primo argomento
       print(sys.argv[1][lastIndexOf(sys.argv[1],sys.argv[2]):])
   else:
       i=int(sys.argv[2])                                    # converte il secondo argomento in un numero
