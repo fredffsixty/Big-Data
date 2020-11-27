@@ -1,8 +1,0 @@
-{
-    "java.project.referencedLibraries": [
-        "lib/**/*.jar",
-        "/usr/local/Cellar/hadoop/3.3.0/libexec/share/hadoop/common/**/*.jar",
-        "/usr/local/Cellar/hadoop/3.3.0/libexec/share/hadoop/mapreduce/**/*.jar"
-    ],
-    "java.dependency.packagePresentation": "hierarchical"
-}
