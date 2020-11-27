@@ -13,7 +13,8 @@ public class SurvivedPassengersReduce extends MapReduceBase implements Reducer<I
 
 	public void reduce(IntWritable pclass, Iterator<Text> values, OutputCollector<IntWritable,ArrayWritable> output, Reporter reporter) throws IOException {
 
-		float embarked = 0;
+		float embarkedMales = 0;
+		float embarkedFemales = 0;
 		float survivedFemales = 0; 
 		float survivedMales = 0;
 
@@ -22,18 +23,21 @@ public class SurvivedPassengersReduce extends MapReduceBase implements Reducer<I
 
 		while (values.hasNext()) {
 
-			String value = ((Text)values.next()).toString();
-			embarked += 1;
+			String[] passenger = Text.decode(values.next().copyBytes()).split(",");
 			
-			if (value.equals("male"))
-				survivedMales += 1;
-			else if (value.equals("female"))
-				survivedFemales += 1;
+			if (passenger[0].equals("male")){
+				embarkedMales += 1;
+				survivedMales += passenger[1].equals("survived") ? 1 : 0;
+			}
+			else if (passenger[0].equals("female")){
+				embarkedFemales +=1;
+				survivedFemales += passenger[1].equals("survived") ? 1 : 0;
+			}
 			
 		}
 
-		survivedMales /= (embarked==0.0 ? 1.0 : embarked);
-		survivedFemales /= (embarked==0.0 ? 1.0 : embarked);
+		survivedMales = 100 * survivedMales / (embarkedMales == 0.0 ? 1 : embarkedMales); // avoid division by 0
+		survivedFemales = 100 * survivedFemales / (embarkedFemales == 0.0 ? 1 : embarkedFemales);
 
 		output.collect(passengersClass, new ArrayWritable(FloatWritable.class, 
 					new FloatWritable[]{new FloatWritable(survivedMales),new FloatWritable(survivedFemales)}));

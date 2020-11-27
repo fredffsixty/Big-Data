@@ -6,7 +6,7 @@ import org.apache.hadoop.mapred.*;
 
 public class SurvivedPassengersDriver {
     public static void main(String[] args) {
-        JobClient client = new JobClient();
+
         // Create a configuration object for the job
         JobConf conf = new JobConf(SurvivedPassengersDriver.class);
 
@@ -17,6 +17,10 @@ public class SurvivedPassengersDriver {
         conf.setOutputKeyClass(IntWritable.class);
         conf.setOutputValueClass(ArrayWritable.class);
 
+        // Specify data type for mapper output key and value
+        conf.setMapOutputKeyClass(IntWritable.class);
+        conf.setMapOutputValueClass(Text.class);
+        
         // Specify names of Mapper and Reducer Class
         conf.setMapperClass(survivedpassengers.SurvivedPassengersMap.class);
         conf.setReducerClass(survivedpassengers.SurvivedPassengersReduce.class);
@@ -32,18 +36,11 @@ public class SurvivedPassengersDriver {
         FileInputFormat.setInputPaths(conf, new Path(args[0]));
         FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 
-        client.setConf(conf);
         try {
             // Run the job 
             JobClient.runJob(conf);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try {
-                client.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+        }    
     }
 }
