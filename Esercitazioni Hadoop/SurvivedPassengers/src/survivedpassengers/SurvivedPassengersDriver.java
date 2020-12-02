@@ -15,7 +15,7 @@ public class SurvivedPassengersDriver {
 
         // Specify data type of output key and value
         conf.setOutputKeyClass(IntWritable.class);
-        conf.setOutputValueClass(ArrayWritable.class);
+        conf.setOutputValueClass(Text.class);
 
         // Specify data type for mapper output key and value
         conf.setMapOutputKeyClass(IntWritable.class);

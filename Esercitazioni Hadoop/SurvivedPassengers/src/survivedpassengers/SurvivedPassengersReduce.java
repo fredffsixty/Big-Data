@@ -4,14 +4,12 @@ import java.io.IOException;
 import java.util.*;
 
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.ArrayWritable;
-import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.*;
 
-public class SurvivedPassengersReduce extends MapReduceBase implements Reducer<IntWritable, Text, IntWritable, ArrayWritable> {
+public class SurvivedPassengersReduce extends MapReduceBase implements Reducer<IntWritable, Text, IntWritable, Text> {
 
-	public void reduce(IntWritable pclass, Iterator<Text> values, OutputCollector<IntWritable,ArrayWritable> output, Reporter reporter) throws IOException {
+	public void reduce(IntWritable pclass, Iterator<Text> values, OutputCollector<IntWritable,Text> output, Reporter reporter) throws IOException {
 
 		float embarkedMales = 0;
 		float embarkedFemales = 0;
@@ -38,8 +36,9 @@ public class SurvivedPassengersReduce extends MapReduceBase implements Reducer<I
 
 		survivedMales = 100 * survivedMales / (embarkedMales == 0.0 ? 1 : embarkedMales); // avoid division by 0
 		survivedFemales = 100 * survivedFemales / (embarkedFemales == 0.0 ? 1 : embarkedFemales);
+		
+		String result = Float.toString(survivedMales) + ", " + Float.toString(survivedFemales);
 
-		output.collect(passengersClass, new ArrayWritable(FloatWritable.class, 
-					new FloatWritable[]{new FloatWritable(survivedMales),new FloatWritable(survivedFemales)}));
+		output.collect(passengersClass, new Text(result));
 	}
 }
