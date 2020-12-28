@@ -1,4 +1,4 @@
-###Progetto di esame a.a. 2020-2021
+# Progetto di esame a.a. 2020-2021
 
 Il progetto è una competizione Kaggle che si trova al [seguente indirizzo](https://www.kaggle.com/mlg-ulb/creditcardfraud).
 
