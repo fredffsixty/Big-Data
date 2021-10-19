@@ -1,38 +1,39 @@
 #!/usr/bin/env python
+
+'''
+Script che restituisce la sottostringa ottenuta del primo argomento
+da linea di comando a partire dal carattere o numero di posizione passato
+come secondo argomento:
+
+tail.py <stringa> <carattere>|<indice>
+'''
 import sys
 
-##
-#
-# calcola l'indice dell'ultima occorrenza di c in s come *prima occorrenza* nell'inversa di s
-# e poi sottrae questa posizione dalla lunghezza totale della stringa
-#
 def lastIndexOf(s,c):
-    try:
-      idx = len(s) - 1 - s[::-1].index(c)
-    except ValueError:
-      idx = len(s)
-    
-    return idx
-    
+  '''
+  lastIndexOf(str,chr) --> int
+
+  Restituisce l'indice dell'ultima occorrenza del carattere c
+  nella stringa s ovvero -1 nel caso in cui c non sia presente in s
+  '''
+  return len(s) - 1 - s[::-1].index(c) if c in s else -1
+
 
 def main():
 
-  # gestione dell'input
   if len(sys.argv) != 3:
-    print('Errore negli argomenti!!\n\nUso: tail.py <stringa> <carattere>|<indice>')
+    print('Numero errato di argomenti: tail.py <stringa> <indice>|<carattere>')
+  elif not sys.argv[1].isalpha() or\
+        not(sys.argv[2].isdigit() or\
+           (sys.argv[2].isalpha() and len(sys.argv[2]) == 1)):
 
-  elif not (sys.argv[2].isdigit() or (sys.argv[2][0]=='-' and sys.argv[2][1::].isdigit())):
-                              # verifica che il secondo argomento non sia una stringa tutta numerica
-                              # e quindi cerca la sua ultima occorrenza nella stringa primo argomento
-      print(sys.argv[1][lastIndexOf(sys.argv[1],sys.argv[2]):])
+    print('Tipo errato degli argomenti: tail.py <stringa> <indice>|<carattere>')
   else:
-      i=int(sys.argv[2])                                    # converte il secondo argomento in un numero
-      if i < -len(sys.argv[1]) or i >= len(sys.argv[1]):    # verifica che non sia fuori dagli indici consentiti
-          print('Indice del carattere fuori dal range')
-      else:
-          print(sys.argv[1][i:])                            # stampa direttamente la sottostringa a partira dalla
-                                                            # posizione individuata
+    idx = int(sys.argv[2]) if sys.argv[2].isdigit() else lastIndexOf(sys.argv[1],sys.argv[2])
 
-# This is the standard boilerplate that calls the main() function.
+    print(sys.argv[1][idx::] if idx in range(0,len(sys.argv[1])) else\
+          'Indice non compreso nella stringa')
+
+
 if __name__ == '__main__':
   main()
