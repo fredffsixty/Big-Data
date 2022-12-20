@@ -1,0 +1,390 @@
+import json 
+import torch
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from rdkit import Chem
+from rdkit.Chem import DataStructs
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import MACCSkeys, AllChem
+from rdkit.Chem.AtomPairs import Pairs, Torsions
+from Package.DataProcessing import DataProcessing
+from rdkit.Avalon import pyAvalonTools as fpAvalon
+from rdkit.Chem.Fingerprints import FingerprintMols
+from sklearn.model_selection import train_test_split
+from rdkit.Chem.ChemicalFeatures import BuildFeatureFactory
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+df = pd.read_csv("/home/scontino/python/graph_vae/CDK1.csv")
+smiles = df["Smiles"].values
+labels = df["Class"].values
+x_train, x_test, y_train, y_test = train_test_split(smiles, labels, test_size=0.1, random_state=17)
+
+
+
+class generateFingerprints():
+    def __init__(self, data):
+        self.nbits = 1024
+        self.data = data
+        # self.data = Chem.MolFromSmiles(smiles)
+        self.list_smiles, self.list_molecule = [], []
+        
+    
+    def __checkDataInput__(self):
+        if len(self.data) > 1:
+            if isinstance(self.data, pd.Series):
+                self.list_smiles = self.data.values()
+                return self.list_smiles
+            elif isinstance(self.data, np.ndarray):
+                self.list_smiles = self.data
+                return self.list_smiles
+            elif isinstance(self.data, dict):
+                if len(self.data.keys()) > 1:
+                    for chiavi in self.data.keys():
+                        self.list_smiles.append(self.data[chiavi])
+                    return self.list_smiles
+        else:
+            if isinstance(self.data, dict):
+                chiave = list(self.data.keys())
+                if len(self.data[chiave[0]]) == 1:
+                    self.smiles = self.data[chiave[0]]
+                    print("self. smiles è:", self.smiles[0])
+                    return self.smiles[0]
+                else:
+                    for stringa in self.data[chiave[0]]:
+                        self.list_smiles.append(stringa)
+                    return self.list_smiles
+            elif isinstance(self.data, str):
+                self.smiles = self.data
+                return self.smiles
+    
+    def __smilesGen__(self):
+        if len(self.list_smiles) == 0:
+            self.smiles = Chem.MolFromSmiles(self.smiles[0])
+            return self.smiles
+        else:
+            for string in self.list_smiles:
+                print(string)
+                self.list_molecule.append(Chem.MolFromSmiles(string))
+                print(self.list_molecule)
+                
+            return self.list_molecule
+            
+    def __create__(self):
+        if len(self.list_molecule) == 0:
+            #/ creo un array vuoto 
+            rdkit_fing = np.zeros(shape=(0, ), dtype=np.int8)
+            morgan_fing = np.zeros(shape=(0,), dtype=np.int8)
+            atompair_fing = np.zeros(shape=(0,), dtype=np.int8)
+            torsion_fing = np.zeros(shape=(0,), dtype=np.int8)
+            layered_fing = np.zeros(shape=(0,), dtype=np.int8)
+            featmorgan_fing = np.zeros(shape=(0,), dtype=np.int8)
+            ecfp4_fing = np.zeros(shape=(0,), dtype=np.int8)
+            #/genero le fingerprints
+            rdkit = Chem.rdmolops.RDKFingerprint(self.smiles, maxPath=7, fpSize=self.nbits, nBitsPerHash=2)
+            morgan = AllChem.GetMorganFingerprintAsBitVect(self.smiles, 2, nBits=self.nbits)
+            atompair = rdMolDescriptors.GetHashedAtomPairFingerprintAsBitVect(self.smiles, nBits=self.nbits)
+            torsion = rdMolDescriptors.GetHashedTopologicalTorsionFingerprintAsBitVect(self.smiles, nBits=self.nbits)
+            layered = Chem.rdmolops.LayeredFingerprint(self.smiles, fpSize=self.nbits)
+            featmorgan = AllChem.GetMorganFingerprintAsBitVect(self.smiles, 2, nBits=self.nbits, useFeatures=True)
+            ecfp4 = AllChem.GetMorganFingerprintAsBitVect(self.smiles, 2, nBits=self.nbits)
+            
+            #/creo i vettori bit
+            DataStructs.ConvertToNumpyArray(rdkit, rdkit_fing),
+            DataStructs.ConvertToNumpyArray(morgan, morgan_fing),
+            DataStructs.ConvertToNumpyArray(atompair, atompair_fing),
+            DataStructs.ConvertToNumpyArray(torsion, torsion_fing),
+            DataStructs.ConvertToNumpyArray(layered, layered_fing),
+            DataStructs.ConvertToNumpyArray(featmorgan, featmorgan_fing),
+            DataStructs.ConvertToNumpyArray(ecfp4, ecfp4_fing)
+            
+            lista_fing = [
+                rdkit_fing,
+                morgan_fing,
+                atompair_fing,
+                torsion_fing,
+                layered_fing,
+                featmorgan_fing,
+                ecfp4_fing
+            ]
+
+            return lista_fing
+        
+        else:
+            list_of_list = []
+            print(self.list_molecule)
+            for idx, smiles in enumerate(self.list_molecule):
+                print(smiles)
+                rdkit_fing = np.zeros(shape=(0, ), dtype=np.int8)
+                morgan_fing = np.zeros(shape=(0,), dtype=np.int8)
+                atompair_fing = np.zeros(shape=(0,), dtype=np.int8)
+                torsion_fing = np.zeros(shape=(0,), dtype=np.int8)
+                layered_fing = np.zeros(shape=(0,), dtype=np.int8)
+                featmorgan_fing = np.zeros(shape=(0,), dtype=np.int8)
+                ecfp4_fing = np.zeros(shape=(0,), dtype=np.int8)
+                #/ creo un array vuoto 
+                #/genero le fingerprints 
+                rdkit = Chem.rdmolops.RDKFingerprint(smiles, maxPath=7, fpSize=self.nbits, nBitsPerHash=2)
+                morgan = AllChem.GetMorganFingerprintAsBitVect(smiles, 2, nBits=self.nbits)
+                atompair = rdMolDescriptors.GetHashedAtomPairFingerprintAsBitVect(smiles, nBits=self.nbits)
+                torsion = rdMolDescriptors.GetHashedTopologicalTorsionFingerprintAsBitVect(smiles, nBits=self.nbits)
+                layered = Chem.rdmolops.LayeredFingerprint(smiles, fpSize=self.nbits)
+                featmorgan = AllChem.GetMorganFingerprintAsBitVect(smiles, 2, nBits=self.nbits, useFeatures=True)
+                ecfp4 = AllChem.GetMorganFingerprintAsBitVect(smiles, 2, nBits=self.nbits)
+
+                #/creo i vettori bit
+                DataStructs.ConvertToNumpyArray(rdkit, rdkit_fing),
+                DataStructs.ConvertToNumpyArray(morgan, morgan_fing),
+                DataStructs.ConvertToNumpyArray(atompair, atompair_fing),
+                DataStructs.ConvertToNumpyArray(torsion, torsion_fing),
+                DataStructs.ConvertToNumpyArray(layered, layered_fing),
+                DataStructs.ConvertToNumpyArray(featmorgan, featmorgan_fing),
+                DataStructs.ConvertToNumpyArray(ecfp4, ecfp4_fing)
+
+                lista_fing = [
+                rdkit_fing,
+                morgan_fing,
+                atompair_fing,
+                torsion_fing,
+                layered_fing,
+                featmorgan_fing,
+                ecfp4_fing
+                ]
+                
+                list_of_list.append(lista_fing)
+                
+            return list_of_list
+
+    def __execute__(self):
+        self.__checkDataInput__()
+        self.__smilesGen__()
+        lista = self.__create__()
+        return lista 
+
+
+gen_fing_train = generateFingerprints(data=x_train)
+gen_fing_test = generateFingerprints(data=x_test)
+#/genero le fingerprints
+list_fing_train = gen_fing_train.__execute__()
+list_fing_test = gen_fing_test.__execute__()
+
+def stuckFing(rdkit=None, morgan=None, atompair=None, torsion=None, layered=None, featmorgan=None, ecfp4=None):
+    """
+    Function that create a matrix of fingerprints. 
+
+    # Args:
+        * rdkit ([type], optional): RDKit fingeprint vector. Defaults to None.
+        * morgan ([type], optional): Morgan fingeprint vector. Defaults to None.
+        * atompair ([type], optional): AtomPair fingeprint vector. Defaults to None.
+        * torsion ([type], optional): Torsion fingeprint vector. Defaults to None.
+        * layered ([type], optional): Layered fingeprint vector. Defaults to None.
+        * featmorgan ([type], optional): FeatMorgan fingeprint vector. Defaults to None.
+        * ecfp4 ([type], optional): ECFP4 fingerprint vector. Defaults to None.
+
+    # Returns:
+        A matrix of fingeprints is returned. 
+    """
+    
+    fingerprintsList = []
+    if rdkit is None:
+        print("rdkit parameter is not passed")
+    else:
+        fingerprintsList.append(rdkit)
+    
+    if morgan is None:
+        print("morgan parameter is not passed")
+    else:
+        fingerprintsList.append(morgan)
+    
+    if atompair is None:
+        print("atompair parameter is not passed")
+    else:
+        fingerprintsList.append(atompair)
+    
+    if torsion is None:
+        print("torsion parameter is not passed")
+    else:
+        fingerprintsList.append(torsion)
+    
+    if layered is None:
+        print("layered parameter is not passed")
+    else:
+        fingerprintsList.append(layered)
+    
+    if featmorgan is None:
+        print("featmorgan parameter is not passed")
+    else:
+        fingerprintsList.append(featmorgan)
+    
+    if ecfp4 is None:
+        print("ecfp4 parameter is not passed")
+    else:
+        fingerprintsList.append(ecfp4)
+
+    fingerprintsList = np.array(fingerprintsList)
+    
+    if len(fingerprintsList.shape) <= 2:
+        dim1 = fingerprintsList.shape[0]
+        dim2 = fingerprintsList.shape[1]
+        inputs = np.empty(shape=(dim1, dim2))
+        for i in tqdm(range(dim1)):
+            for idxFingList in range(dim2):
+                inputs[i][idxFingList] = fingerprintsList[i][idxFingList]
+    elif len(fingerprintsList.shape) == 3:
+        dim1 = len(fingerprintsList)
+        dim2 = len(fingerprintsList[0])
+        dim3 = len(fingerprintsList[0][0])
+        inputs = np.empty(shape=(dim1, dim2, dim3))
+        for i in tqdm(range(dim1)):
+            for idxFingList in range(dim2):
+                inputs[i][idxFingList] = fingerprintsList[idxFingList][i]
+
+    return inputs
+
+list_fing_train = np.array(list_fing_train)
+list_fing_test = np.array(list_fing_test)
+
+stucked_fing_train = []
+for lung_train in range(len(list_fing_train)):
+            stucked_fing_train.append(stuckFing(
+                rdkit=list_fing_train[lung_train][0], morgan=list_fing_train[lung_train][1], atompair=list_fing_train[lung_train][2],
+                torsion=list_fing_train[lung_train][3], layered=list_fing_train[lung_train][4], featmorgan=list_fing_train[lung_train][5], ecfp4=list_fing_train[lung_train][6]
+            ))
+
+stucked_fing_test = []
+for lung_test in range(len(list_fing_test)):
+            stucked_fing_test.append(stuckFing(
+                rdkit=list_fing_test[lung_test][0], morgan=list_fing_test[lung_test][1], atompair=list_fing_test[lung_test][2],
+                torsion=list_fing_test[lung_test][3], layered=list_fing_test[lung_test][4], featmorgan=list_fing_test[lung_test][5], ecfp4=list_fing_train[lung_train][6]
+            ))
+
+x_train = torch.Tensor(stucked_fing_train)
+x_test = torch.Tensor(stucked_fing_test)
+y_train = torch.Tensor(y_train)
+y_test = torch.Tensor(y_test)
+
+import torch.nn as nn 
+
+class SeparableConv2d(nn.Module):
+    def __init__(self,in_channels,out_channels,kernel_size=1,stride=1,padding=0,dilation=1,bias=False):
+        super(SeparableConv2d,self).__init__()
+
+        self.conv1 = nn.Conv2d(in_channels,in_channels,kernel_size,stride,padding,dilation,groups=in_channels,bias=bias)
+        self.pointwise = nn.Conv2d(in_channels,out_channels,1,1,0,1,1,bias=bias)
+    
+    def forward(self,x):
+        x = self.conv1(x)
+        x = self.pointwise(x)
+        return x
+
+
+class CNN(nn.Module):
+    def __init__(self, inchannels, num_classes, output_activation='sigmoid'):
+        super(CNN, self).__init__()
+
+        self.inchannels= inchannels
+        self.classes=num_classes
+        
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0,ceil_mode=False)
+        self.cs= nn.ModuleList([
+        SeparableConv2d(self.inchannels, 16, 1, stride=2, padding=0),
+        SeparableConv2d(16, 32, (3, 1), stride=2, padding=0),
+        SeparableConv2d(32, 64, (3, 1), stride=2, padding=0),
+        SeparableConv2d(64, 128, (3, 1), stride=2, padding=0),
+        SeparableConv2d(128, 128, (3, 1), stride=2, padding=0),
+        SeparableConv2d(128, 64, (3, 1), stride=2, padding=0),
+        SeparableConv2d(64, 32, (3, 1), stride=2, padding=0),
+        SeparableConv2d(32, 16, (3, 1), stride=2, padding=0),
+        ])
+        self.relu= nn.ReLU(inplace=True)
+
+        self.classifier= nn.Sequential(
+             nn.LazyLinear(out_features=512, bias=True)
+            ,nn.ReLU(inplace=True)
+            ,nn.Dropout(p=0.2, inplace=False)
+            ,nn.Linear(in_features=512, out_features=64, bias=True)
+            ,nn.ReLU(inplace=True)
+            ,nn.Dropout(p=0.2, inplace=False)
+            ,nn.Linear(in_features=64, out_features=64, bias=True)
+            ,nn.ReLU(inplace=True)
+            ,nn.Dropout(p=0.2, inplace=False)
+            ,nn.Linear(in_features=64, out_features=self.classes, bias=True),
+            nn.Sigmoid()
+        )
+
+        
+    def forward(self, x):
+        batch = x.shape[0]
+        for idx in range(len(self.cs)):
+            x = self.relu(self.cs[idx](x))
+        
+        flatten= x.view(batch,-1)
+        out= self.classifier(flatten)
+        
+        return out
+    
+    
+model = CNN(inchannels=7, num_classes=1)
+print(model)
+
+
+def fitPytorch(model, num_epochs, train_x, train_y, batch_size, device, optimizer,
+               loss_function="binary_crossentropy", classWeight=None):
+    num_epochs = num_epochs
+    batch_size = batch_size
+    loss_train_batch, accuracy_train_batch = [], []
+    for epoch in range(num_epochs):
+        print(f'Epochs n:{epoch+1}/{num_epochs}')
+        loss_train, acc_train = [], []
+        #/ Dico al modello che stiamo facendo train
+        model.train()
+        for i in tqdm(range(0, len(train_x), batch_size)):
+            #/ Forward pass
+            batch_x = train_x[i:i+batch_size].view(-1, 7, 1024, 1).to(device)
+            batch_y = train_y[i:i+batch_size].view(-1, 1*1).to(device)
+            #/ predizione del modello 
+            outputs = model(batch_x).to(device)
+            #/ select a loss function 
+            if loss_function == "binary_crossentropy":
+                loss = nn.functional.binary_cross_entropy(outputs, batch_y, weight=classWeight)
+            del batch_x
+            #/ Backward and optimize
+            optim = optimizer
+            optim.zero_grad()
+            loss.backward() #/ esegue la backpropagation per noi
+            optim.step() #/ ottimizza i pesi ad ogni step 
+            
+            if (i+batch_size) % batch_size == 0:               
+                a = loss.item()
+                loss_train.append(a)
+            torch.cuda.empty_cache()
+            #/ val accuracy calculation
+            correct_train = 0
+            total_train = 1
+            out_maxes = [torch.round(i) for i in outputs]
+            target_maxes = [i for i in batch_y]
+            for i_n,j_n in zip(out_maxes, target_maxes):
+                if torch.equal(i_n, j_n):
+                    correct_train += 1
+                total_train += 1
+                train_acc = round(correct_train/total_train, 5)
+            acc_train.append(train_acc)
+        print("lunghezza accuracy list train:", len(acc_train))
+        lunghezz_train = len(acc_train)
+        #/ print accuracy e loss train 
+        loss_train_batch.append(sum(loss_train)/lunghezz_train)
+        accuracy_train_batch.append(sum(acc_train)/lunghezz_train)
+        print(f"Training Loss:\t{loss_train_batch[-1]}\nTRaining Accuracy:\t{accuracy_train_batch[-1]}")
+        del acc_train, loss_train
+
+    return loss_train_batch, model
+
+
+
+#/Optimizer
+optim = torch.optim.Adamax(model.parameters(), lr=0.0002)
+#/ Addestro il modello 
+loss, trained_model = fitPytorch(model=model.to(device), num_epochs=100, train_x=x_train, train_y=y_train, batch_size=16, device=device, optimizer=optim)
